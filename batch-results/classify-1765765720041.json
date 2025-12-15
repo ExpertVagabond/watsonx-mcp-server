@@ -1,0 +1,106 @@
+{
+  "summary": {
+    "total_documents": 15,
+    "processing_time": "5.36s",
+    "avg_time_per_doc": "0.36s"
+  },
+  "category_distribution": {
+    "technical": 3,
+    "marketing": 5,
+    "legal": 1,
+    "other": 1
+  },
+  "top_topics": [],
+  "documents": [
+    {
+      "filename": "-2yzXSIuC8o.txt",
+      "path": "/Volumes/Virtual Server/_NEW/Documents/-2yzXSIuC8o.txt",
+      "size": 39082,
+      "processed_at": "2025-12-15T02:28:34.685Z",
+      "category": "technical"
+    },
+    {
+      "filename": "01-starfall-1978.txt",
+      "path": "/Volumes/Virtual Server/_NEW/Documents/01-starfall-1978.txt",
+      "size": 1455,
+      "processed_at": "2025-12-15T02:28:35.792Z",
+      "category": "marketing"
+    },
+    {
+      "filename": "02-starfall-ii-the-void-1980.txt",
+      "path": "/Volumes/Virtual Server/_NEW/Documents/02-starfall-ii-the-void-1980.txt",
+      "size": 1521,
+      "processed_at": "2025-12-15T02:28:36.191Z",
+      "category": "marketing"
+    },
+    {
+      "filename": "03-starfall-iii-empire-of-dust-1982.txt",
+      "path": "/Volumes/Virtual Server/_NEW/Documents/03-starfall-iii-empire-of-dust-1982.txt",
+      "size": 1464,
+      "processed_at": "2025-12-15T02:28:36.665Z",
+      "category": "marketing"
+    },
+    {
+      "filename": "04-starfall-iv-genesis-1984.txt",
+      "path": "/Volumes/Virtual Server/_NEW/Documents/04-starfall-iv-genesis-1984.txt",
+      "size": 1488,
+      "processed_at": "2025-12-15T02:28:37.099Z",
+      "category": "marketing"
+    },
+    {
+      "filename": "05-starfall-v-the-last-light-1986.txt",
+      "path": "/Volumes/Virtual Server/_NEW/Documents/05-starfall-v-the-last-light-1986.txt",
+      "size": 1547,
+      "processed_at": "2025-12-15T02:28:37.577Z",
+      "category": "marketing"
+    },
+    {
+      "filename": "1002519.txt",
+      "path": "/Volumes/Virtual Server/_NEW/Documents/1002519.txt",
+      "size": 8341,
+      "processed_at": "2025-12-15T02:28:38.014Z",
+      "category": "technical"
+    },
+    {
+      "filename": "1002520.txt",
+      "error": "Rate limit of 2 requests per 1s was reached for instance id b0c2aa31-3746-4ffa-a43e-813254c610a8 (user RedHat-53978672, plan 3f6acf43-ede8-413a-ac69-f8af3bb0cbfe)"
+    },
+    {
+      "filename": "1002521.txt",
+      "path": "/Volumes/Virtual Server/_NEW/Documents/1002521.txt",
+      "size": 5755,
+      "processed_at": "2025-12-15T02:28:38.488Z",
+      "category": "technical"
+    },
+    {
+      "filename": "1011109.txt",
+      "error": "Rate limit of 2 requests per 1s was reached for instance id b0c2aa31-3746-4ffa-a43e-813254c610a8 (user RedHat-53978672, plan 3f6acf43-ede8-413a-ac69-f8af3bb0cbfe)"
+    },
+    {
+      "filename": "1013662.txt",
+      "path": "/Volumes/Virtual Server/_NEW/Documents/1013662.txt",
+      "size": 57738,
+      "processed_at": "2025-12-15T02:28:38.998Z",
+      "category": "legal"
+    },
+    {
+      "filename": "1013665.txt",
+      "error": "Rate limit of 2 requests per 1s was reached for instance id b0c2aa31-3746-4ffa-a43e-813254c610a8 (user RedHat-53978672, plan 3f6acf43-ede8-413a-ac69-f8af3bb0cbfe)"
+    },
+    {
+      "filename": "1013666.txt",
+      "error": "Rate limit of 2 requests per 1s was reached for instance id b0c2aa31-3746-4ffa-a43e-813254c610a8 (user RedHat-53978672, plan 3f6acf43-ede8-413a-ac69-f8af3bb0cbfe)"
+    },
+    {
+      "filename": "1013667.txt",
+      "path": "/Volumes/Virtual Server/_NEW/Documents/1013667.txt",
+      "size": 39433,
+      "processed_at": "2025-12-15T02:28:39.551Z",
+      "category": "other"
+    },
+    {
+      "filename": "1013668.txt",
+      "error": "Rate limit of 2 requests per 1s was reached for instance id b0c2aa31-3746-4ffa-a43e-813254c610a8 (user RedHat-53978672, plan 3f6acf43-ede8-413a-ac69-f8af3bb0cbfe)"
+    }
+  ]
+}

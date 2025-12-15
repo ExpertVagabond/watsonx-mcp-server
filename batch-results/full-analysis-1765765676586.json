@@ -1,0 +1,193 @@
+{
+  "summary": {
+    "total_documents": 10,
+    "processing_time": "30.00s",
+    "avg_time_per_doc": "3.00s"
+  },
+  "category_distribution": {
+    "technical_documentationexplanationthedocumentisatranscriptofavideotutorialondeploying": 1,
+    "creative_writingexplanationthedocumentprovideddescribesaconceptfora": 1,
+    "creative_writingexplanationthedocumentprovidesdetailedpromptsforcreatinga": 1,
+    "creative_writingexplanationthedocumentprovidedappearstobeadetaileddescription": 1,
+    "creative_writingexplanationthedocumentdescribesamovieposterconceptfora": 1,
+    "creative_writingexplanationthedocumentprovidedisadetaileddescriptionandpromp": 1,
+    "technical_documentationexplanationthedocumentprovidesdetailedinstructionsonhowtoautomatethesetupofan": 1,
+    "technical_documentationexplanationthedocumentprovidesstepbystepinstructionsforautomatingthe": 1,
+    "technical_documentationexplanationthedocumentprovidesstepbystepinstructionsonhowtoadd": 1,
+    "business_documentexplanationthedocumentdescribesaprojectcalledcandypocket": 1
+  },
+  "top_topics": [
+    {
+      "topic": "1. Importance of IT monitoring",
+      "count": 1
+    },
+    {
+      "topic": "2. Introduction to WhatsApp Gold as an IT monitoring tool",
+      "count": 1
+    },
+    {
+      "topic": "3. Preparing systems for monitoring",
+      "count": 1
+    },
+    {
+      "topic": "4. Basic monitoring aspects",
+      "count": 1
+    },
+    {
+      "topic": "5. Alerts and dashboards in IT monitoring.",
+      "count": 1
+    },
+    {
+      "topic": "1970s sci-fi movie poster",
+      "count": 1
+    },
+    {
+      "topic": "lone astronaut",
+      "count": 1
+    },
+    {
+      "topic": "massive derelict alien spacecraft",
+      "count": 1
+    },
+    {
+      "topic": "barren planet",
+      "count": 1
+    },
+    {
+      "topic": "orange and teal color palette",
+      "count": 1
+    }
+  ],
+  "documents": [
+    {
+      "filename": "-2yzXSIuC8o.txt",
+      "path": "/Volumes/Virtual Server/_NEW/Documents/-2yzXSIuC8o.txt",
+      "size": 39082,
+      "processed_at": "2025-12-15T02:27:26.588Z",
+      "category": "technical_documentationexplanationthedocumentisatranscriptofavideotutorialondeploying",
+      "topics": [
+        "1. Importance of IT monitoring",
+        "2. Introduction to WhatsApp Gold as an IT monitoring tool",
+        "3. Preparing systems for monitoring",
+        "4. Basic monitoring aspects",
+        "5. Alerts and dashboards in IT monitoring."
+      ],
+      "summary": "This document is a tutorial on deploying a comprehensive IT monitoring system, specifically highlighting WhatsApp Gold's free version, to track various devices and receive alerts, aiming to alleviate stress and gain full network visibility.\n\n(Note: Although"
+    },
+    {
+      "filename": "01-starfall-1978.txt",
+      "path": "/Volumes/Virtual Server/_NEW/Documents/01-starfall-1978.txt",
+      "size": 1455,
+      "processed_at": "2025-12-15T02:27:29.588Z",
+      "category": "creative_writingexplanationthedocumentprovideddescribesaconceptfora",
+      "topics": [
+        "1970s sci-fi movie poster",
+        "lone astronaut",
+        "massive derelict alien spacecraft",
+        "barren planet",
+        "orange and teal color palette",
+        "painted illustration style",
+        "Drew Struzan inspired",
+        "cinematic composition",
+        "vintage film grain",
+        "24x36 poster aspect ratio",
+        "STARFALL",
+        "In space",
+        "hope dies first.\n\n\nKey Topics: 1970s sci-fi"
+      ],
+      "summary": "A 1970s sci-fi movie poster illustration depicts a lone astronaut before a colossal derelict alien spacecraft on a barren planet, inspired by Drew Struzan"
+    },
+    {
+      "filename": "02-starfall-ii-the-void-1980.txt",
+      "path": "/Volumes/Virtual Server/_NEW/Documents/02-starfall-ii-the-void-1980.txt",
+      "size": 1521,
+      "processed_at": "2025-12-15T02:27:32.177Z",
+      "category": "creative_writingexplanationthedocumentprovidesdetailedpromptsforcreatinga",
+      "topics": [
+        "1. 1980 sci-fi horror movie poster\n2. Spaceship corridor\n3. Shadowy alien creature silhouette\n4. Retro airbrush illustration\n5. VHS cover aesthetic\n6. Alien movie inspired atmosphere\n7. Vintage poster art\n8. Title: STARFALL II: THE VOID\n9. Tagline: They thought they escaped. They were wrong.\n1"
+      ],
+      "summary": "\"1980 sci-fi horror movie poster for STARFALL II: THE VOID, featuring a terrified crew in a dark spaceship corridor, with a shadowy alien creature lurking,"
+    },
+    {
+      "filename": "03-starfall-iii-empire-of-dust-1982.txt",
+      "path": "/Volumes/Virtual Server/_NEW/Documents/03-starfall-iii-empire-of-dust-1982.txt",
+      "size": 1464,
+      "processed_at": "2025-12-15T02:27:34.804Z",
+      "category": "creative_writingexplanationthedocumentprovidedappearstobeadetaileddescription",
+      "topics": [
+        "1. STARFALL III: EMPIRE OF DUST (movie title)\n2. Early 1980s space opera\n3. Rebel spacecraft fleet\n4. Imperial space station\n5. Epic cinematic scale\n6. John Berkey painting style\n7. Colorful laser beams and explosions\n8. Warm amber and cool blue tones\n9. Heroic composition\n10. Vint"
+      ],
+      "summary": "\"STARFALL III: EMPIRE OF DUST\" (1982) is an epic space opera movie poster depicting a rebel fleet charging towards a massive imperial space station, in the style"
+    },
+    {
+      "filename": "04-starfall-iv-genesis-1984.txt",
+      "path": "/Volumes/Virtual Server/_NEW/Documents/04-starfall-iv-genesis-1984.txt",
+      "size": 1488,
+      "processed_at": "2025-12-15T02:27:37.438Z",
+      "category": "creative_writingexplanationthedocumentdescribesamovieposterconceptfora",
+      "topics": [
+        "1. 1984 sci-fi movie poster\n2. Ancient alien artifact discovery\n3. Underground cavern setting\n4. Spielberg-esque sense of wonder and mystery\n5. Retro painted illustration style\n6. Golden light emanating from artifact\n7. Lens flares\n8. Awe-inspiring atmosphere\n9. Movie title placement\n10. Vertical poster format\n11"
+      ],
+      "summary": "\"In 1984, scientists discover an ancient alien artifact in an underground cavern, evoking a Spielberg-esque sense of wonder and mystery, with glowing symbols and gold"
+    },
+    {
+      "filename": "05-starfall-v-the-last-light-1986.txt",
+      "path": "/Volumes/Virtual Server/_NEW/Documents/05-starfall-v-the-last-light-1986.txt",
+      "size": 1547,
+      "processed_at": "2025-12-15T02:27:40.139Z",
+      "category": "creative_writingexplanationthedocumentprovidedisadetaileddescriptionandpromp",
+      "topics": [
+        "1. Starfall V: The Last Light (1986)\n2. 1986 sci-fi action movie\n3. Heroic space warrior\n4. Futuristic armor\n5. Glowing energy weapon\n6. Massive explosions\n7. Spacecraft battle\n8. Neon pink and electric blue color scheme\n9. 80s aesthetic\n10. Chrome and metallic textures"
+      ],
+      "summary": "\"STARFALL V: THE LAST LIGHT\" (1986) is an 80s sci-fi action movie, featuring a heroic space warrior battling in a futuristic epic finale with ne"
+    },
+    {
+      "filename": "1002519.txt",
+      "path": "/Volumes/Virtual Server/_NEW/Documents/1002519.txt",
+      "size": 8341,
+      "processed_at": "2025-12-15T02:27:42.516Z",
+      "category": "technical_documentationexplanationthedocumentprovidesdetailedinstructionsonhowtoautomatethesetupofan",
+      "topics": [
+        "1. IBM Cloud Satellite setup\n2. Automating AWS location setup with Schematics template\n3. IBM Cloud IAM API key creation\n4. AWS account credentials setup\n5. Reviewing and editing Satellite location details\n6. Cost estimate for location provisioning\n7. Monitoring provisioning progress (optional)"
+      ],
+      "summary": "This document provides a step-by-step guide on automating AWS location setup for IBM Cloud Satellite using Schematics templates, including IAM permissions, AWS account setup, and location creation via the Satellite console.\n\n(19"
+    },
+    {
+      "filename": "1002520.txt",
+      "path": "/Volumes/Virtual Server/_NEW/Documents/1002520.txt",
+      "size": 10054,
+      "processed_at": "2025-12-15T02:27:44.515Z",
+      "category": "technical_documentationexplanationthedocumentprovidesstepbystepinstructionsforautomatingthe",
+      "topics": [
+        "1. IBM Cloud Satellite",
+        "2. Automating Azure setup with Schematics templates",
+        "3. Setting up Azure account credentials",
+        "4. Creating a service principal identity with Contributor role",
+        "5. Configuring Azure credentials in IBM Cloud Satellite."
+      ],
+      "summary": "This document explains how to automate Azure setup using IBM Cloud Schematics for creating a Satellite location, provisioning hosts, and setting up the control plane, requiring Azure account credentials and service principal creation for IBM Cloud Satellite access.\n\n["
+    },
+    {
+      "filename": "1002521.txt",
+      "path": "/Volumes/Virtual Server/_NEW/Documents/1002521.txt",
+      "size": 5755,
+      "processed_at": "2025-12-15T02:27:46.667Z",
+      "category": "technical_documentationexplanationthedocumentprovidesstepbystepinstructionsonhowtoadd",
+      "topics": [
+        "1. IBM Cloud Satellite\n2. Adding GCP hosts to Satellite\n3. Host requirements for GCP hosts\n4. Creating a Satellite location\n5. Downloading and modifying host registration script for GCP hosts\n6. Creating an instance template in GCP Compute Engine for GCP hosts\n7. Enabling GCP RHEL package updates using subscription-manager\n8. Configuring machine configuration in GCP Compute Engine for instance template\n9. Overview of available options"
+      ],
+      "summary": "This document explains how to add Google Cloud Platform (GCP) hosts to an IBM Cloud Satellite location, including prerequisites, downloading the host registration script, and configuring the instance template in GCP Compute Engine."
+    },
+    {
+      "filename": "1011109.txt",
+      "path": "/Volumes/Virtual Server/_NEW/Documents/1011109.txt",
+      "size": 3764,
+      "processed_at": "2025-12-15T02:27:54.195Z",
+      "category": "business_documentexplanationthedocumentdescribesaprojectcalledcandypocket",
+      "topics": [
+        "1. CandyPocket Web3 Wallet\n2. Dappstore and Community Features\n3. Candy Token Distribution and Earning Models\n4. Road Map and Phases of Development\n5. NFT Mining and C2C Trading\n\n\n##\n\nTopics:\n1. CandyPocket Web3 Wallet\n2. Dappstore and Community Features\n3. Candy Token Distribution and Earning Models\n4. Road Map and Phases of Development"
+      ],
+      "summary": "CandyPocket is a user-friendly web3 wallet with a dappstore and community, offering low-cost payment solutions, token earnings through various models, and exclusive community access for users in the Third World.\n\n## Instruction"
+    }
+  ]
+}

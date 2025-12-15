@@ -114,8 +114,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             model_id: {
               type: "string",
-              description: "Model ID (e.g., 'ibm/granite-13b-chat-v2', 'meta-llama/llama-3-70b-instruct')",
-              default: "ibm/granite-13b-chat-v2",
+              description: "Model ID (e.g., 'ibm/granite-3-3-8b-instruct', 'meta-llama/llama-3-70b-instruct')",
+              default: "ibm/granite-3-3-8b-instruct",
             },
             max_new_tokens: {
               type: "number",
@@ -163,7 +163,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             model_id: {
               type: "string",
               description: "Embedding model ID",
-              default: "ibm/slate-125m-english-rtrvr",
+              default: "ibm/slate-125m-english-rtrvr-v2",
             },
           },
           required: ["texts"],
@@ -189,7 +189,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             model_id: {
               type: "string",
               description: "Chat model ID",
-              default: "ibm/granite-13b-chat-v2",
+              default: "ibm/granite-3-3-8b-instruct",
             },
             max_new_tokens: {
               type: "number",
@@ -402,7 +402,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "watsonx_generate": {
         const params = {
           input: args.prompt,
-          modelId: args.model_id || "ibm/granite-13b-chat-v2",
+          modelId: args.model_id || "ibm/granite-3-3-8b-instruct",
           parameters: {
             max_new_tokens: args.max_new_tokens || 500,
             temperature: args.temperature || 0.7,
@@ -456,7 +456,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "watsonx_embeddings": {
         const params = {
           inputs: args.texts,
-          modelId: args.model_id || "ibm/slate-125m-english-rtrvr",
+          modelId: args.model_id || "ibm/slate-125m-english-rtrvr-v2",
         };
 
         // Add spaceId (preferred) or projectId
@@ -491,7 +491,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         const params = {
           input: formattedPrompt + "\n\nAssistant:",
-          modelId: args.model_id || "ibm/granite-13b-chat-v2",
+          modelId: args.model_id || "ibm/granite-3-3-8b-instruct",
           parameters: {
             max_new_tokens: args.max_new_tokens || 500,
             temperature: args.temperature || 0.7,
