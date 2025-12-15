@@ -8,14 +8,26 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { WatsonXAI } from "@ibm-cloud/watsonx-ai";
 import { IamAuthenticator } from "ibm-cloud-sdk-core";
+// import KeyProtectV2 from "@ibm-cloud/key-protect"; // Temporarily disabled - package not available
 
 // Configuration from environment
 const WATSONX_API_KEY = process.env.WATSONX_API_KEY;
 const WATSONX_PROJECT_ID = process.env.WATSONX_PROJECT_ID;
+const WATSONX_SPACE_ID = process.env.WATSONX_SPACE_ID; // Deployment space (preferred)
 const WATSONX_URL = process.env.WATSONX_URL || "https://us-south.ml.cloud.ibm.com";
+
+// IBM Z / Key Protect configuration
+const KEY_PROTECT_API_KEY = process.env.KEY_PROTECT_API_KEY || process.env.WATSONX_API_KEY;
+const KEY_PROTECT_INSTANCE_ID = process.env.KEY_PROTECT_INSTANCE_ID;
+const KEY_PROTECT_URL = process.env.KEY_PROTECT_URL || "https://us-south.kms.cloud.ibm.com";
+
+// z/OS Connect configuration (optional - requires mainframe access)
+const ZOS_CONNECT_URL = process.env.ZOS_CONNECT_URL;
+const ZOS_CONNECT_API_KEY = process.env.ZOS_CONNECT_API_KEY;
 
 // Initialize watsonx.ai client
 let watsonxClient = null;
+let keyProtectClient = null;
 
 function getWatsonxClient() {
   if (!watsonxClient && WATSONX_API_KEY) {
@@ -30,11 +42,54 @@ function getWatsonxClient() {
   return watsonxClient;
 }
 
+// Initialize Key Protect client (IBM Z HSM-backed key management)
+function getKeyProtectClient() {
+  // Temporarily disabled - @ibm-cloud/key-protect package not available
+  // if (!keyProtectClient && KEY_PROTECT_API_KEY && KEY_PROTECT_INSTANCE_ID) {
+  //   keyProtectClient = KeyProtectV2.newInstance({
+  //     authenticator: new IamAuthenticator({
+  //       apikey: KEY_PROTECT_API_KEY,
+  //     }),
+  //     serviceUrl: KEY_PROTECT_URL,
+  //   });
+  //   keyProtectClient.setServiceUrl(KEY_PROTECT_URL);
+  // }
+  return null; // Disabled
+}
+
+// z/OS Connect API caller (for mainframe integration)
+async function callZosConnect(endpoint, method = "GET", body = null) {
+  if (!ZOS_CONNECT_URL) {
+    throw new Error("z/OS Connect not configured. Set ZOS_CONNECT_URL environment variable.");
+  }
+
+  const url = `${ZOS_CONNECT_URL}${endpoint}`;
+  const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  };
+
+  if (ZOS_CONNECT_API_KEY) {
+    headers["Authorization"] = `Bearer ${ZOS_CONNECT_API_KEY}`;
+  }
+
+  const options = { method, headers };
+  if (body && (method === "POST" || method === "PUT")) {
+    options.body = JSON.stringify(body);
+  }
+
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    throw new Error(`z/OS Connect error: ${response.status} ${response.statusText}`);
+  }
+  return response.json();
+}
+
 // Create MCP server
 const server = new Server(
   {
-    name: "watsonx-mcp-server",
-    version: "1.0.0",
+    name: "watsonx-ibmz-mcp-server",
+    version: "2.0.0",
   },
   {
     capabilities: {
@@ -148,6 +203,180 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["messages"],
         },
       },
+      // IBM Z / Key Protect Tools
+      {
+        name: "key_protect_list_keys",
+        description: "List encryption keys from IBM Key Protect (HSM-backed key management on IBM Z infrastructure)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            limit: {
+              type: "number",
+              description: "Maximum number of keys to return",
+              default: 100,
+            },
+            offset: {
+              type: "number",
+              description: "Offset for pagination",
+              default: 0,
+            },
+          },
+        },
+      },
+      {
+        name: "key_protect_create_key",
+        description: "Create a new encryption key in IBM Key Protect (stored in FIPS 140-2 Level 3 HSM)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            name: {
+              type: "string",
+              description: "Name for the new key",
+            },
+            description: {
+              type: "string",
+              description: "Description of the key's purpose",
+            },
+            type: {
+              type: "string",
+              enum: ["root_key", "standard_key"],
+              description: "Key type: root_key (for wrapping) or standard_key (for encryption)",
+              default: "standard_key",
+            },
+            extractable: {
+              type: "boolean",
+              description: "Whether the key material can be extracted",
+              default: false,
+            },
+          },
+          required: ["name"],
+        },
+      },
+      {
+        name: "key_protect_get_key",
+        description: "Get details of a specific key from IBM Key Protect",
+        inputSchema: {
+          type: "object",
+          properties: {
+            key_id: {
+              type: "string",
+              description: "The ID of the key to retrieve",
+            },
+          },
+          required: ["key_id"],
+        },
+      },
+      {
+        name: "key_protect_wrap_key",
+        description: "Wrap (encrypt) data using a root key in IBM Key Protect - for envelope encryption",
+        inputSchema: {
+          type: "object",
+          properties: {
+            key_id: {
+              type: "string",
+              description: "The ID of the root key to use for wrapping",
+            },
+            plaintext: {
+              type: "string",
+              description: "Base64-encoded data encryption key to wrap",
+            },
+            aad: {
+              type: "array",
+              items: { type: "string" },
+              description: "Additional authentication data (AAD) for AEAD encryption",
+            },
+          },
+          required: ["key_id", "plaintext"],
+        },
+      },
+      {
+        name: "key_protect_unwrap_key",
+        description: "Unwrap (decrypt) data using a root key in IBM Key Protect",
+        inputSchema: {
+          type: "object",
+          properties: {
+            key_id: {
+              type: "string",
+              description: "The ID of the root key to use for unwrapping",
+            },
+            ciphertext: {
+              type: "string",
+              description: "Base64-encoded wrapped data encryption key",
+            },
+            aad: {
+              type: "array",
+              items: { type: "string" },
+              description: "Additional authentication data (must match wrap AAD)",
+            },
+          },
+          required: ["key_id", "ciphertext"],
+        },
+      },
+      {
+        name: "key_protect_delete_key",
+        description: "Delete an encryption key from IBM Key Protect (irreversible)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            key_id: {
+              type: "string",
+              description: "The ID of the key to delete",
+            },
+            force: {
+              type: "boolean",
+              description: "Force deletion even if key has associated resources",
+              default: false,
+            },
+          },
+          required: ["key_id"],
+        },
+      },
+      // z/OS Connect Tools (requires mainframe access)
+      {
+        name: "zos_connect_list_services",
+        description: "List available z/OS Connect services (RESTful APIs to mainframe programs). Requires ZOS_CONNECT_URL to be configured.",
+        inputSchema: {
+          type: "object",
+          properties: {},
+        },
+      },
+      {
+        name: "zos_connect_call_service",
+        description: "Call a z/OS Connect service to interact with mainframe programs (CICS, IMS, batch). Requires ZOS_CONNECT_URL to be configured.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            service_name: {
+              type: "string",
+              description: "Name of the z/OS Connect service to call",
+            },
+            operation: {
+              type: "string",
+              description: "Operation/method to invoke (e.g., GET, POST)",
+              default: "POST",
+            },
+            payload: {
+              type: "object",
+              description: "JSON payload to send to the mainframe service",
+            },
+          },
+          required: ["service_name"],
+        },
+      },
+      {
+        name: "zos_connect_get_service_info",
+        description: "Get detailed information about a z/OS Connect service including its OpenAPI specification",
+        inputSchema: {
+          type: "object",
+          properties: {
+            service_name: {
+              type: "string",
+              description: "Name of the z/OS Connect service",
+            },
+          },
+          required: ["service_name"],
+        },
+      },
     ],
   };
 });
@@ -182,8 +411,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           },
         };
 
-        // Add projectId if configured
-        if (WATSONX_PROJECT_ID) {
+        // Add spaceId (preferred) or projectId
+        if (WATSONX_SPACE_ID) {
+          params.spaceId = WATSONX_SPACE_ID;
+        } else if (WATSONX_PROJECT_ID) {
           params.projectId = WATSONX_PROJECT_ID;
         }
 
@@ -228,7 +459,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           modelId: args.model_id || "ibm/slate-125m-english-rtrvr",
         };
 
-        if (WATSONX_PROJECT_ID) {
+        // Add spaceId (preferred) or projectId
+        if (WATSONX_SPACE_ID) {
+          params.spaceId = WATSONX_SPACE_ID;
+        } else if (WATSONX_PROJECT_ID) {
           params.projectId = WATSONX_PROJECT_ID;
         }
 
@@ -265,7 +499,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           },
         };
 
-        if (WATSONX_PROJECT_ID) {
+        // Add spaceId (preferred) or projectId
+        if (WATSONX_SPACE_ID) {
+          params.spaceId = WATSONX_SPACE_ID;
+        } else if (WATSONX_PROJECT_ID) {
           params.projectId = WATSONX_PROJECT_ID;
         }
 

@@ -34,8 +34,11 @@ Set these environment variables:
 ```bash
 WATSONX_API_KEY=your-ibm-cloud-api-key
 WATSONX_URL=https://us-south.ml.cloud.ibm.com
-WATSONX_PROJECT_ID=your-project-id  # Optional, for project-scoped operations
+WATSONX_SPACE_ID=your-deployment-space-id  # Recommended: deployment space
+WATSONX_PROJECT_ID=your-project-id          # Alternative: project ID
 ```
+
+**Note**: Either `WATSONX_SPACE_ID` or `WATSONX_PROJECT_ID` is required for text generation, embeddings, and chat. Deployment spaces are recommended as they have Watson Machine Learning (WML) pre-configured.
 
 ### 3. Add to Claude Code
 
@@ -50,7 +53,8 @@ The MCP server is already configured in `~/.claude.json`:
       "args": ["/Users/matthewkarsten/watsonx-mcp-server/index.js"],
       "env": {
         "WATSONX_API_KEY": "your-api-key",
-        "WATSONX_URL": "https://us-south.ml.cloud.ibm.com"
+        "WATSONX_URL": "https://us-south.ml.cloud.ibm.com",
+        "WATSONX_SPACE_ID": "your-deployment-space-id"
       }
     }
   }
@@ -74,8 +78,9 @@ Result: Code flows like water
 
 Some notable models available:
 
+- `ibm/granite-3-3-8b-instruct` - IBM Granite 3.3 8B (recommended)
 - `ibm/granite-13b-chat-v2` - IBM Granite chat model
-- `ibm/granite-3-8b-instruct` - Latest Granite instruct model
+- `ibm/granite-3-8b-instruct` - Granite 3 instruct model
 - `meta-llama/llama-3-70b-instruct` - Meta's Llama 3 70B
 - `mistralai/mistral-large` - Mistral AI large model
 - `ibm/slate-125m-english-rtrvr` - Embedding model
@@ -117,6 +122,8 @@ This MCP server uses:
 - **Plan**: Lite (free tier)
 - **Region**: us-south
 - **Instance**: watsonx-ai-claude
+- **Deployment Space**: claude-mcp-space (ID: 0f06720f-298e-47d6-8b5a-9baab8eda8f5)
+- **WML Instance**: watson-ml (guid: b0c2aa31-3746-4ffa-a43e-813254c610a8)
 
 ## Files
 
