@@ -121,10 +121,8 @@ This MCP server uses:
 - **Service**: watsonx.ai Studio (data-science-experience)
 - **Plan**: Lite (free tier)
 - **Region**: us-south
-- **Instance**: watsonx-ai-claude
-- **Project**: claude-mcp-integration (ID: d10531c9-281c-45d9-9559-7bd2b30b4ad0)
-- **Deployment Space**: claude-mcp-space (ID: 0f06720f-298e-47d6-8b5a-9baab8eda8f5)
-- **WML Instance**: watson-ml (guid: b0c2aa31-3746-4ffa-a43e-813254c610a8)
+
+Create your own watsonx.ai project and deployment space in IBM Cloud.
 
 ## Integration with IBM Z MCP Server
 
