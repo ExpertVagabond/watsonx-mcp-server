@@ -1,6 +1,7 @@
 {
   "name": "watsonx-mcp-server",
-  "version": "1.0.0",
+  "mcpName": "io.github.ExpertVagabond/watsonx",
+  "version": "1.0.1",
   "description": "MCP server for IBM watsonx.ai integration with Claude",
   "main": "index.js",
   "type": "module",
@@ -20,6 +21,11 @@
   ],
   "author": "Matthew Karsten",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ExpertVagabond/watsonx-mcp-server.git"
+  },
+  "homepage": "https://github.com/ExpertVagabond/watsonx-mcp-server#readme",
   "dependencies": {
     "@ibm-cloud/watsonx-ai": "^1.7.5",
     "@modelcontextprotocol/sdk": "^1.24.3",
