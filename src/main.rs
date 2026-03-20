@@ -185,16 +185,45 @@ fn tool_definitions() -> Value {
     ])
 }
 
+/// Validate model ID to prevent path traversal
+fn validate_model_id(model: &str) -> Result<(), String> {
+    if model.is_empty() || model.len() > 128 {
+        return Err("Invalid model_id length".into());
+    }
+    if !model.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == '/' || c == '.') {
+        return Err("model_id contains invalid characters".into());
+    }
+    if model.contains("..") {
+        return Err("model_id contains path traversal".into());
+    }
+    Ok(())
+}
+
+/// Validate key_id to prevent injection
+fn validate_key_id(key_id: &str) -> Result<(), String> {
+    if key_id.is_empty() || key_id.len() > 256 {
+        return Err("Invalid key_id length".into());
+    }
+    if !key_id.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_') {
+        return Err("key_id contains invalid characters".into());
+    }
+    Ok(())
+}
+
 async fn call_tool(cfg: &mut Config, name: &str, args: &Value) -> Result<Value, String> {
     match name {
         "watsonx_generate" => {
             let token = cfg.get_iam_token().await?;
             let prompt = args["prompt"].as_str().ok_or("prompt required")?;
+            if prompt.is_empty() {
+                return Err("prompt cannot be empty".into());
+            }
             let model = args["model_id"].as_str().unwrap_or("ibm/granite-3-3-8b-instruct");
-            let max_tokens = args["max_new_tokens"].as_u64().unwrap_or(500);
-            let temp = args["temperature"].as_f64().unwrap_or(0.7);
-            let top_p = args["top_p"].as_f64().unwrap_or(1.0);
-            let top_k = args["top_k"].as_u64().unwrap_or(50);
+            validate_model_id(model)?;
+            let max_tokens = args["max_new_tokens"].as_u64().unwrap_or(500).min(4096);
+            let temp = args["temperature"].as_f64().unwrap_or(0.7).clamp(0.0, 2.0);
+            let top_p = args["top_p"].as_f64().unwrap_or(1.0).clamp(0.0, 1.0);
+            let top_k = args["top_k"].as_u64().unwrap_or(50).min(500);
 
             let mut body = json!({
                 "input": prompt,
@@ -233,7 +262,14 @@ async fn call_tool(cfg: &mut Config, name: &str, args: &Value) -> Result<Value, 
         "watsonx_embeddings" => {
             let token = cfg.get_iam_token().await?;
             let texts = args["texts"].as_array().ok_or("texts array required")?;
+            if texts.is_empty() {
+                return Err("texts array cannot be empty".into());
+            }
+            if texts.len() > 100 {
+                return Err("texts array exceeds maximum batch size of 100".into());
+            }
             let model = args["model_id"].as_str().unwrap_or("ibm/slate-125m-english-rtrvr-v2");
+            validate_model_id(model)?;
 
             let mut body = json!({"inputs": texts, "model_id": model});
             let scope = cfg.scope_params();
@@ -251,9 +287,13 @@ async fn call_tool(cfg: &mut Config, name: &str, args: &Value) -> Result<Value, 
         "watsonx_chat" => {
             let token = cfg.get_iam_token().await?;
             let messages = args["messages"].as_array().ok_or("messages required")?;
+            if messages.is_empty() {
+                return Err("messages array cannot be empty".into());
+            }
             let model = args["model_id"].as_str().unwrap_or("ibm/granite-3-3-8b-instruct");
-            let max_tokens = args["max_new_tokens"].as_u64().unwrap_or(500);
-            let temp = args["temperature"].as_f64().unwrap_or(0.7);
+            validate_model_id(model)?;
+            let max_tokens = args["max_new_tokens"].as_u64().unwrap_or(500).min(4096);
+            let temp = args["temperature"].as_f64().unwrap_or(0.7).clamp(0.0, 2.0);
 
             let formatted: String = messages.iter().map(|m| {
                 let role = m["role"].as_str().unwrap_or("user");
@@ -304,6 +344,9 @@ async fn call_tool(cfg: &mut Config, name: &str, args: &Value) -> Result<Value, 
             let token = cfg.get_iam_token().await?;
             let instance_id = cfg.kp_instance_id.as_ref().ok_or("KEY_PROTECT_INSTANCE_ID not set")?;
             let key_name = args["name"].as_str().ok_or("name required")?;
+            if key_name.is_empty() || key_name.len() > 256 || key_name.contains("..") {
+                return Err("Invalid key name".into());
+            }
             let key_type = args["type"].as_str().unwrap_or("standard_key");
             let extractable = args["extractable"].as_bool().unwrap_or(false);
             let body = json!({
@@ -322,6 +365,7 @@ async fn call_tool(cfg: &mut Config, name: &str, args: &Value) -> Result<Value, 
             let token = cfg.get_iam_token().await?;
             let instance_id = cfg.kp_instance_id.as_ref().ok_or("KEY_PROTECT_INSTANCE_ID not set")?;
             let key_id = args["key_id"].as_str().ok_or("key_id required")?;
+            validate_key_id(key_id)?;
             let resp = cfg.client.get(format!("{}/api/v2/keys/{key_id}", cfg.kp_url))
                 .bearer_auth(&token)
                 .header("Bluemix-Instance", instance_id.as_str())
@@ -333,6 +377,7 @@ async fn call_tool(cfg: &mut Config, name: &str, args: &Value) -> Result<Value, 
             let token = cfg.get_iam_token().await?;
             let instance_id = cfg.kp_instance_id.as_ref().ok_or("KEY_PROTECT_INSTANCE_ID not set")?;
             let key_id = args["key_id"].as_str().ok_or("key_id required")?;
+            validate_key_id(key_id)?;
             let plaintext = args["plaintext"].as_str().ok_or("plaintext required")?;
             let mut body = json!({"plaintext": plaintext});
             if let Some(aad) = args["aad"].as_array() {
@@ -350,6 +395,7 @@ async fn call_tool(cfg: &mut Config, name: &str, args: &Value) -> Result<Value, 
             let token = cfg.get_iam_token().await?;
             let instance_id = cfg.kp_instance_id.as_ref().ok_or("KEY_PROTECT_INSTANCE_ID not set")?;
             let key_id = args["key_id"].as_str().ok_or("key_id required")?;
+            validate_key_id(key_id)?;
             let ciphertext = args["ciphertext"].as_str().ok_or("ciphertext required")?;
             let mut body = json!({"ciphertext": ciphertext});
             if let Some(aad) = args["aad"].as_array() {
