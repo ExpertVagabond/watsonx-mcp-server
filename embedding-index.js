@@ -9,6 +9,36 @@ import { IamAuthenticator } from "ibm-cloud-sdk-core";
 import fs from "fs/promises";
 import path from "path";
 
+// ── Security Constants ──────────────────────────────────────────────────
+const MAX_DOCUMENT_SIZE = 1 * 1024 * 1024; // 1 MB per document
+const MAX_BATCH_SIZE = 20; // max docs per embedding batch
+const MAX_INDEX_SIZE = 50 * 1024 * 1024; // 50 MB max index file
+const MAX_QUERY_LENGTH = 2000; // max characters for search query
+const ALLOWED_EXTENSIONS = new Set([".txt", ".md", ".json", ".csv"]);
+
+/** Redact API key values from error messages. */
+function redactError(msg) {
+  let safe = String(msg);
+  for (const key of ["WATSONX_API_KEY", "WATSONX_SPACE_ID"]) {
+    const val = process.env[key];
+    if (val && val.length > 4) {
+      safe = safe.replaceAll(val, "[REDACTED]");
+    }
+  }
+  // Redact long token-like strings
+  safe = safe.replace(/[A-Za-z0-9_\-]{40,}/g, "[REDACTED-TOKEN]");
+  return safe;
+}
+
+/** Validate a file path stays under the allowed base directory. */
+function validatePath(filePath, baseDir) {
+  const resolved = path.resolve(filePath);
+  if (!resolved.startsWith(path.resolve(baseDir))) {
+    throw new Error(`Path traversal blocked: ${filePath}`);
+  }
+  return resolved;
+}
+
 // Configuration
 const WATSONX_API_KEY = process.env.WATSONX_API_KEY;
 const WATSONX_URL = process.env.WATSONX_URL || "https://us-south.ml.cloud.ibm.com";
@@ -140,7 +170,16 @@ async function buildIndex(maxDocs = 100) {
  * Query the index
  */
 async function queryIndex(query, topK = 5) {
-  console.log(`🔍 Searching: "${query}"`);
+  // Validate query input
+  if (typeof query !== "string" || query.trim().length === 0) {
+    throw new Error("Query must be a non-empty string");
+  }
+  if (query.length > MAX_QUERY_LENGTH) {
+    throw new Error(`Query exceeds maximum length of ${MAX_QUERY_LENGTH} characters`);
+  }
+  topK = Math.min(Math.max(1, topK), 50); // Clamp to 1-50
+
+  console.log(`Searching: "${query}"`);
 
   const index = await loadIndex();
   if (index.documents.length === 0) {

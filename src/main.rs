@@ -3,6 +3,80 @@ use serde_json::{json, Value};
 use std::io::BufRead;
 use tracing::info;
 
+// ── Security Constants ─────────────────────────────────────────────────
+
+/// Maximum response body from upstream APIs (bytes).
+const MAX_RESPONSE_BODY: usize = 10 * 1024 * 1024; // 10 MB
+
+/// Maximum prompt length in characters.
+const MAX_PROMPT_LEN: usize = 64_000;
+
+/// Maximum number of texts per embedding batch.
+const MAX_EMBEDDING_BATCH: usize = 50;
+
+/// Maximum number of chat messages per request.
+const MAX_CHAT_MESSAGES: usize = 100;
+
+/// Redact sensitive env var values from error messages.
+fn redact_error(msg: &str) -> String {
+    let mut output = msg.to_string();
+    for env_key in &[
+        "WATSONX_API_KEY",
+        "KEY_PROTECT_API_KEY",
+        "ZOS_CONNECT_API_KEY",
+    ] {
+        if let Ok(val) = std::env::var(env_key) {
+            if val.len() > 4 {
+                output = output.replace(&val, "[REDACTED]");
+            }
+        }
+    }
+    // Redact long token-like runs (40+ consecutive alphanumeric/dash/underscore chars)
+    let mut result = String::with_capacity(output.len());
+    let mut run_start: Option<usize> = None;
+    for (i, c) in output.char_indices() {
+        if c.is_ascii_alphanumeric() || c == '-' || c == '_' {
+            if run_start.is_none() {
+                run_start = Some(i);
+            }
+        } else {
+            if let Some(start) = run_start {
+                let run = &output[start..i];
+                if run.len() >= 40 {
+                    result.push_str("[REDACTED-TOKEN]");
+                } else {
+                    result.push_str(run);
+                }
+                run_start = None;
+            }
+            result.push(c);
+        }
+    }
+    if let Some(start) = run_start {
+        let run = &output[start..];
+        if run.len() >= 40 {
+            result.push_str("[REDACTED-TOKEN]");
+        } else {
+            result.push_str(run);
+        }
+    }
+    result
+}
+
+/// Validate a text input parameter is within bounds.
+fn validate_text(value: &str, field: &str, max_len: usize) -> Result<(), String> {
+    if value.is_empty() {
+        return Err(format!("{field} must not be empty"));
+    }
+    if value.len() > max_len {
+        return Err(format!("{field} exceeds maximum length of {max_len}"));
+    }
+    if value.contains('\0') {
+        return Err(format!("{field} contains null bytes"));
+    }
+    Ok(())
+}
+
 struct Config {
     api_key: Option<String>,
     project_id: Option<String>,
@@ -29,7 +103,10 @@ impl Config {
             kp_url: std::env::var("KEY_PROTECT_URL").unwrap_or_else(|_| "https://us-south.kms.cloud.ibm.com".to_string()),
             zos_url: std::env::var("ZOS_CONNECT_URL").ok(),
             zos_api_key: std::env::var("ZOS_CONNECT_API_KEY").ok(),
-            client: reqwest::Client::new(),
+            client: reqwest::Client::builder()
+                .timeout(std::time::Duration::from_secs(60))
+                .build()
+                .unwrap_or_else(|_| reqwest::Client::new()),
             iam_token: None,
         }
     }
@@ -41,8 +118,8 @@ impl Config {
         let api_key = self.api_key.as_ref().ok_or("WATSONX_API_KEY not set")?;
         let resp = self.client.post("https://iam.cloud.ibm.com/identity/token")
             .form(&[("grant_type", "urn:ibm:params:oauth:grant-type:apikey"), ("apikey", api_key.as_str())])
-            .send().await.map_err(|e| format!("IAM token error: {e}"))?;
-        let body: Value = resp.json().await.map_err(|e| format!("IAM parse error: {e}"))?;
+            .send().await.map_err(|e| redact_error(&format!("IAM token error: {e}")))?;
+        let body: Value = resp.json().await.map_err(|e| redact_error(&format!("IAM parse error: {e}")))?;
         let token = body["access_token"].as_str().ok_or("No access_token in IAM response")?.to_string();
         self.iam_token = Some(token.clone());
         Ok(token)
