@@ -104,7 +104,26 @@ function sanitizeErrorMessage(error) {
   // Strip potential credential leaks from error messages
   return msg.replace(/Bearer\s+\S+/gi, "Bearer [REDACTED]")
             .replace(/apikey=\S+/gi, "apikey=[REDACTED]")
-            .replace(/key=\S+/gi, "key=[REDACTED]");
+            .replace(/key=\S+/gi, "key=[REDACTED]")
+            .replace(/\/Users\/[^\s"']*/g, "[redacted-path]")
+            .replace(/\/Volumes\/[^\s"']*/g, "[redacted-path]");
+}
+
+/** Detect prompt injection patterns in user-supplied prompts. */
+function detectPromptInjection(prompt) {
+  const injectionPatterns = [
+    /ignore\s+(all\s+)?previous\s+instructions/i,
+    /you\s+are\s+now\s+(a|an)\s+/i,
+    /system\s*:\s*/i,
+    /\[INST\]/i,
+    /<\|im_start\|>/i,
+  ];
+  for (const pattern of injectionPatterns) {
+    if (pattern.test(prompt)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // ── Security: Environment Validation ────────────────────────────────
