@@ -459,6 +459,18 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 // Handle tool calls
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
+
+  // Security: validate tool name against known tools
+  const VALID_TOOLS = new Set([
+    "watsonx_generate", "watsonx_list_models", "watsonx_embeddings", "watsonx_chat",
+    "key_protect_list_keys", "key_protect_create_key", "key_protect_get_key",
+    "key_protect_wrap_key", "key_protect_unwrap_key", "key_protect_delete_key",
+    "zos_connect_list_services", "zos_connect_call_service", "zos_connect_get_service_info",
+  ]);
+  if (!VALID_TOOLS.has(name)) {
+    return { content: [{ type: "text", text: `Unknown tool: ${name}` }], isError: true };
+  }
+
   const client = getWatsonxClient();
 
   if (!client) {
@@ -469,20 +481,26 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           text: "Error: watsonx.ai not configured. Set WATSONX_API_KEY environment variable.",
         },
       ],
+      isError: true,
     };
   }
 
   try {
     switch (name) {
       case "watsonx_generate": {
+        const validatedPrompt = validateString(args.prompt, "prompt", MAX_PROMPT_LENGTH);
+        if (detectPromptInjection(validatedPrompt)) {
+          return { content: [{ type: "text", text: "Warning: Potential prompt injection detected. Request blocked." }], isError: true };
+        }
+        const validatedModelId = validateModelId(args.model_id);
         const params = {
-          input: args.prompt,
-          modelId: args.model_id || "ibm/granite-3-3-8b-instruct",
+          input: validatedPrompt,
+          modelId: validatedModelId,
           parameters: {
-            max_new_tokens: args.max_new_tokens || 500,
-            temperature: args.temperature || 0.7,
-            top_p: args.top_p || 1.0,
-            top_k: args.top_k || 50,
+            max_new_tokens: validateNumericParam(args.max_new_tokens, "max_new_tokens"),
+            temperature: validateNumericParam(args.temperature, "temperature"),
+            top_p: validateNumericParam(args.top_p, "top_p"),
+            top_k: validateNumericParam(args.top_k, "top_k"),
           },
         };
 
@@ -529,9 +547,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case "watsonx_embeddings": {
+        const validatedTexts = validateTextsArray(args.texts);
+        const embeddingModelId = validateModelId(args.model_id) || "ibm/slate-125m-english-rtrvr-v2";
         const params = {
-          inputs: args.texts,
-          modelId: args.model_id || "ibm/slate-125m-english-rtrvr-v2",
+          inputs: validatedTexts,
+          modelId: embeddingModelId,
         };
 
         // Add spaceId (preferred) or projectId
@@ -554,8 +574,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case "watsonx_chat": {
+        // Security: validate messages array structure and content
+        const validatedMessages = validateMessages(args.messages);
+        const chatModelId = validateModelId(args.model_id);
         // Format messages for chat completion
-        const formattedPrompt = args.messages
+        const formattedPrompt = validatedMessages
           .map((m) => {
             if (m.role === "system") return `System: ${m.content}`;
             if (m.role === "user") return `User: ${m.content}`;
@@ -564,12 +587,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           })
           .join("\n\n");
 
+        // Security: check for prompt injection in composed prompt
+        if (detectPromptInjection(formattedPrompt)) {
+          return { content: [{ type: "text", text: "Warning: Potential prompt injection detected in messages. Request blocked." }], isError: true };
+        }
+
         const params = {
           input: formattedPrompt + "\n\nAssistant:",
-          modelId: args.model_id || "ibm/granite-3-3-8b-instruct",
+          modelId: chatModelId,
           parameters: {
-            max_new_tokens: args.max_new_tokens || 500,
-            temperature: args.temperature || 0.7,
+            max_new_tokens: validateNumericParam(args.max_new_tokens, "max_new_tokens"),
+            temperature: validateNumericParam(args.temperature, "temperature"),
             stop_sequences: ["User:", "System:"],
           },
         };
@@ -602,6 +630,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               text: `Unknown tool: ${name}`,
             },
           ],
+          isError: true,
         };
     }
   } catch (error) {
@@ -609,9 +638,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       content: [
         {
           type: "text",
-          text: `Error calling watsonx.ai: ${error.message}`,
+          text: `Error: ${sanitizeErrorMessage(error)}`,
         },
       ],
+      isError: true,
     };
   }
 });
