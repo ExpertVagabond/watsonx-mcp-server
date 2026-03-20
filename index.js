@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 
+/**
+ * WatsonX MCP Server — IBM watsonx.ai + Key Protect + z/OS Connect integration.
+ *
+ * Security: Input validation, prompt injection defense, model ID allow-list,
+ *           parameter bounds checking, credential protection, output sanitization.
+ */
+
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -8,7 +15,109 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { WatsonXAI } from "@ibm-cloud/watsonx-ai";
 import { IamAuthenticator } from "ibm-cloud-sdk-core";
-// import KeyProtectV2 from "@ibm-cloud/key-protect"; // Temporarily disabled - package not available
+// import KeyProtectV2 from "@ibm-cloud/key-protect"; // Temporarily disabled
+
+// ── Security: Input Validation Module ───────────────────────────────
+const MAX_PROMPT_LENGTH = 32_000;
+const MAX_MODEL_ID_LENGTH = 128;
+const MAX_KEY_NAME_LENGTH = 256;
+const MAX_KEY_ID_LENGTH = 128;
+const MAX_SERVICE_NAME_LENGTH = 128;
+const MAX_TEXTS_ARRAY_LENGTH = 100;
+const MAX_TEXT_EMBEDDING_LENGTH = 8_000;
+const MAX_MESSAGES_LENGTH = 50;
+const MAX_MESSAGE_CONTENT_LENGTH = 16_000;
+
+// Allowed model ID patterns (IBM + partner models)
+const MODEL_ID_PATTERN = /^[a-z0-9][a-z0-9._/-]{0,126}[a-z0-9]$/;
+
+// Parameter bounds
+const PARAM_BOUNDS = {
+  max_new_tokens: { min: 1, max: 8192, default: 500 },
+  temperature: { min: 0, max: 2, default: 0.7 },
+  top_p: { min: 0, max: 1, default: 1.0 },
+  top_k: { min: 1, max: 500, default: 50 },
+};
+
+function validateString(value, fieldName, maxLen, required = true) {
+  if (value === undefined || value === null) {
+    if (required) throw new Error(`${fieldName} is required`);
+    return undefined;
+  }
+  if (typeof value !== "string") throw new Error(`${fieldName} must be a string`);
+  const trimmed = value.trim();
+  if (required && trimmed.length === 0) throw new Error(`${fieldName} cannot be empty`);
+  if (trimmed.length > maxLen) throw new Error(`${fieldName} exceeds max length of ${maxLen}`);
+  if (trimmed.includes("\0")) throw new Error(`${fieldName} contains null bytes`);
+  return trimmed;
+}
+
+function validateModelId(modelId) {
+  if (!modelId) return "ibm/granite-3-3-8b-instruct";
+  const id = validateString(modelId, "model_id", MAX_MODEL_ID_LENGTH);
+  if (!MODEL_ID_PATTERN.test(id)) throw new Error(`Invalid model ID format: ${id}`);
+  return id;
+}
+
+function validateNumericParam(value, name) {
+  const bounds = PARAM_BOUNDS[name];
+  if (!bounds) return value;
+  if (value === undefined || value === null) return bounds.default;
+  const n = Number(value);
+  if (!Number.isFinite(n)) throw new Error(`${name} must be a number`);
+  return Math.min(Math.max(n, bounds.min), bounds.max);
+}
+
+function validateIdentifier(value, fieldName) {
+  const id = validateString(value, fieldName, MAX_KEY_ID_LENGTH);
+  if (!/^[a-zA-Z0-9_-]+$/.test(id)) throw new Error(`${fieldName} contains invalid characters`);
+  return id;
+}
+
+function validateServiceName(value) {
+  return validateIdentifier(value, "service_name");
+}
+
+function validateTextsArray(texts) {
+  if (!Array.isArray(texts)) throw new Error("texts must be an array");
+  if (texts.length === 0) throw new Error("texts array is empty");
+  if (texts.length > MAX_TEXTS_ARRAY_LENGTH) throw new Error(`texts array exceeds max length of ${MAX_TEXTS_ARRAY_LENGTH}`);
+  return texts.map((t, i) => validateString(t, `texts[${i}]`, MAX_TEXT_EMBEDDING_LENGTH));
+}
+
+function validateMessages(messages) {
+  if (!Array.isArray(messages)) throw new Error("messages must be an array");
+  if (messages.length === 0) throw new Error("messages array is empty");
+  if (messages.length > MAX_MESSAGES_LENGTH) throw new Error(`Too many messages (max ${MAX_MESSAGES_LENGTH})`);
+  const validRoles = new Set(["system", "user", "assistant"]);
+  return messages.map((m, i) => {
+    if (typeof m !== "object" || m === null) throw new Error(`messages[${i}] must be an object`);
+    const role = validateString(m.role, `messages[${i}].role`, 16);
+    if (!validRoles.has(role)) throw new Error(`messages[${i}].role must be system, user, or assistant`);
+    const content = validateString(m.content, `messages[${i}].content`, MAX_MESSAGE_CONTENT_LENGTH);
+    return { role, content };
+  });
+}
+
+function sanitizeErrorMessage(error) {
+  const msg = error?.message || "Unknown error";
+  // Strip potential credential leaks from error messages
+  return msg.replace(/Bearer\s+\S+/gi, "Bearer [REDACTED]")
+            .replace(/apikey=\S+/gi, "apikey=[REDACTED]")
+            .replace(/key=\S+/gi, "key=[REDACTED]");
+}
+
+// ── Security: Environment Validation ────────────────────────────────
+function checkEnvSecurity() {
+  if (!process.env.WATSONX_API_KEY) {
+    process.stderr.write("Warning: WATSONX_API_KEY is not set\n");
+  }
+  if (!process.env.WATSONX_PROJECT_ID && !process.env.WATSONX_SPACE_ID) {
+    process.stderr.write("Warning: Neither WATSONX_PROJECT_ID nor WATSONX_SPACE_ID is set\n");
+  }
+}
+checkEnvSecurity();
+// ── End Security Module ─────────────────────────────────────────────
 
 // Configuration from environment
 const WATSONX_API_KEY = process.env.WATSONX_API_KEY;
