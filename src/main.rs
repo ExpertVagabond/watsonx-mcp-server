@@ -3,6 +3,10 @@ use serde_json::{json, Value};
 use std::io::BufRead;
 use tracing::info;
 
+use psm_mcp_core::error::sanitize_error;
+use psm_mcp_core::filter::OutputFilter;
+use psm_mcp_core::input::{validate_input_size, validate_name};
+
 // ── Security Constants ─────────────────────────────────────────────────
 
 /// Maximum response body from upstream APIs (bytes).
@@ -17,7 +21,13 @@ const MAX_EMBEDDING_BATCH: usize = 50;
 /// Maximum number of chat messages per request.
 const MAX_CHAT_MESSAGES: usize = 100;
 
-/// Redact sensitive env var values from error messages.
+/// Output filter for redacting secrets/PII from responses.
+fn output_filter() -> OutputFilter {
+    OutputFilter::default()
+}
+
+/// Sanitize error messages using psm-mcp-core (strips paths, redacts tokens).
+/// Also redacts known watsonx env var values.
 fn redact_error(msg: &str) -> String {
     let mut output = msg.to_string();
     for env_key in &[
@@ -31,46 +41,16 @@ fn redact_error(msg: &str) -> String {
             }
         }
     }
-    // Redact long token-like runs (40+ consecutive alphanumeric/dash/underscore chars)
-    let mut result = String::with_capacity(output.len());
-    let mut run_start: Option<usize> = None;
-    for (i, c) in output.char_indices() {
-        if c.is_ascii_alphanumeric() || c == '-' || c == '_' {
-            if run_start.is_none() {
-                run_start = Some(i);
-            }
-        } else {
-            if let Some(start) = run_start {
-                let run = &output[start..i];
-                if run.len() >= 40 {
-                    result.push_str("[REDACTED-TOKEN]");
-                } else {
-                    result.push_str(run);
-                }
-                run_start = None;
-            }
-            result.push(c);
-        }
-    }
-    if let Some(start) = run_start {
-        let run = &output[start..];
-        if run.len() >= 40 {
-            result.push_str("[REDACTED-TOKEN]");
-        } else {
-            result.push_str(run);
-        }
-    }
-    result
+    // Delegate to shared core for path stripping and long-token redaction
+    sanitize_error(&output, 500)
 }
 
-/// Validate a text input parameter is within bounds.
+/// Validate a text input parameter is within bounds (delegates to psm-mcp-core).
 fn validate_text(value: &str, field: &str, max_len: usize) -> Result<(), String> {
     if value.is_empty() {
         return Err(format!("{field} must not be empty"));
     }
-    if value.len() > max_len {
-        return Err(format!("{field} exceeds maximum length of {max_len}"));
-    }
+    validate_input_size(value, max_len).map_err(|e| format!("{field}: {e}"))?;
     if value.contains('\0') {
         return Err(format!("{field} contains null bytes"));
     }
@@ -262,7 +242,10 @@ fn tool_definitions() -> Value {
     ])
 }
 
-/// Validate model ID to prevent path traversal
+/// Validate model ID to prevent path traversal.
+/// Model IDs allow alphanumeric, hyphens, underscores, slashes, and dots
+/// (broader than psm-mcp-core's validate_name, so we keep custom logic
+/// but still use the core for length checking).
 fn validate_model_id(model: &str) -> Result<(), String> {
     if model.is_empty() || model.len() > 128 {
         return Err("Invalid model_id length".into());
@@ -276,14 +259,9 @@ fn validate_model_id(model: &str) -> Result<(), String> {
     Ok(())
 }
 
-/// Validate key_id to prevent injection
+/// Validate key_id using psm-mcp-core's validate_name (alphanumeric + hyphen + underscore).
 fn validate_key_id(key_id: &str) -> Result<(), String> {
-    if key_id.is_empty() || key_id.len() > 256 {
-        return Err("Invalid key_id length".into());
-    }
-    if !key_id.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_') {
-        return Err("key_id contains invalid characters".into());
-    }
+    validate_name(key_id, "key_id", 256).map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -540,19 +518,25 @@ async fn main() {
             "tools/call" => {
                 let tool_name = req.params["name"].as_str().unwrap_or("");
                 let arguments = &req.params["arguments"];
+                let filter = output_filter();
                 match call_tool(&mut cfg, tool_name, arguments).await {
-                    Ok(result) => json!({
-                        "jsonrpc": "2.0",
-                        "id": req.id,
-                        "result": {
-                            "content": [{"type": "text", "text": serde_json::to_string_pretty(&result).unwrap_or_default()}]
-                        }
-                    }),
+                    Ok(result) => {
+                        let raw = serde_json::to_string_pretty(&result).unwrap_or_default();
+                        // Filter secrets/PII from output before returning
+                        let filtered = filter.filter(&raw);
+                        json!({
+                            "jsonrpc": "2.0",
+                            "id": req.id,
+                            "result": {
+                                "content": [{"type": "text", "text": filtered.text}]
+                            }
+                        })
+                    }
                     Err(e) => json!({
                         "jsonrpc": "2.0",
                         "id": req.id,
                         "result": {
-                            "content": [{"type": "text", "text": format!("Error: {e}")}],
+                            "content": [{"type": "text", "text": format!("Error: {}", redact_error(&e))}],
                             "isError": true
                         }
                     }),
