@@ -4,7 +4,11 @@ version = "0.1.0"
 edition = "2024"
 description = "MCP server for IBM watsonx.ai and IBM Z -- 10 tools for text generation, chat, embeddings, model listing, Key Protect, z/OS Connect"
 license = "MIT"
-authors = ["Matthew Karsten <matthewkarstenconnects@gmail.com>"]
+authors = ["Matthew Karsten"]
+repository = "https://github.com/ExpertVagabond/watsonx-mcp-server"
+
+# Never ship the locally-built document index or the script that generates it.
+exclude = ["embeddings-index.json", "embedding-index.js"]
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }

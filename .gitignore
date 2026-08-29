@@ -4,3 +4,6 @@ dist/
 *.log
 .env
 .DS_Store
+
+# Local embedding index built from personal documents -- never commit or publish
+embeddings-index.json

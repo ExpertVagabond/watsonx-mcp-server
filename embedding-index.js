@@ -44,10 +44,9 @@ const WATSONX_API_KEY = process.env.WATSONX_API_KEY;
 const WATSONX_URL = process.env.WATSONX_URL || "https://us-south.ml.cloud.ibm.com";
 const WATSONX_SPACE_ID = process.env.WATSONX_SPACE_ID;
 
-// Paths
-const EXTERNAL_DRIVE = "/Volumes/Virtual Server/_NEW";
-const DOCUMENTS_PATH = `${EXTERNAL_DRIVE}/Documents`;
-const INDEX_PATH = "/Users/matthewkarsten/watsonx-mcp-server/embeddings-index.json";
+// Paths -- configure via env; nothing machine-specific is committed.
+const DOCUMENTS_PATH = process.env.DOCUMENTS_PATH || "./documents";
+const INDEX_PATH = process.env.INDEX_PATH || "./embeddings-index.json";
 
 let client = null;
 
